@@ -78,6 +78,9 @@ def find_contact_info(domain):
         st.write(f"Error fetching contact info from {domain}: {e}")
         return [], set(), "N/A"
 
+# Display the meme GIF
+st.image("https://media2.giphy.com/media/gtzIP3mpbzh16/giphy.gif?cid=6c09b952dbea939fpaegqg1qw5g37wlrlqkklpkz1zrkf9qa&ep=v1_gifs_search&rid=giphy.gif&ct=g")
+
 st.title("SearchX By Sam Jacka")
 
 search_query = st.text_input("Enter search term")
