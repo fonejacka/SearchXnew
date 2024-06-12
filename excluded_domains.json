@@ -1,0 +1,6 @@
+{
+    "excluded_domains": [
+        "target.com",
+        "yelp.com"
+    ]
+}
