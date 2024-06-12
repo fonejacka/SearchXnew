@@ -184,9 +184,8 @@ with st.expander("Excluded Domains", expanded=st.session_state.expander_open):
         with cols[1]:
             if st.button("❌", key=f"delete_{i}", help="Delete URL"):
                 st.session_state.excluded_domains.pop(i)
-                save_excluded_domains(st.session_state.excluded_domains)
                 st.session_state.expander_open = True  # Keep the expander open
-                st.rerun()  # Refresh the page to update the list
+                st.experimental_rerun()  # Refresh the page to update the list
 
     # Add new URLs to the excluded domains list
     new_exclude_urls = st.text_area("Add new URLs to exclude (comma separated)")
@@ -194,9 +193,13 @@ with st.expander("Excluded Domains", expanded=st.session_state.expander_open):
         if new_exclude_urls:
             new_urls = [url.strip() for url in new_exclude_urls.split(",") if url.strip()]
             st.session_state.excluded_domains.extend(new_urls)
-            save_excluded_domains(st.session_state.excluded_domains)
             st.session_state.expander_open = True  # Keep the expander open
-            st.rerun()  # Refresh the page to update the list
+            st.experimental_rerun()  # Refresh the page to update the list
+
+# Save exclusions to JSON file
+if st.button("Save Exclusions"):
+    save_excluded_domains(st.session_state.excluded_domains)
+    st.success("Exclusions saved!")
 
 # Container for the export button and checkbox with gray background
 with st.container():
