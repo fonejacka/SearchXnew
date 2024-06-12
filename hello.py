@@ -161,7 +161,7 @@ st.markdown(
 )
 
 # Display the meme GIF
-st.image("https://media2.giphy.com/media/gtzIP3mpbzh16/giphy.gif?cid=6c09b952dbea939fpaegqg1qw5g37wlrlqkklpkz1zrkf9qa&ep=v1_gifs_search&rid=giphy.gif&ct=g")
+st.image("https://media3.giphy.com/media/fSYmbgG5Ug8S11K0FU/giphy.gif?cid=6c09b952lpcceszzvqsykw8gnc980seejlsrvge593brd0yc&ep=v1_gifs_search&rid=giphy.gif&ct=g")
 
 st.title("SearchX By Sam Jacka")
 
