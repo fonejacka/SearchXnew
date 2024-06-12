@@ -163,7 +163,7 @@ with col1:
 with col2:
     location = st.text_input("Enter location (optional)")
 
-num_pages = st.slider("Number of pages", 1, 20, 1)
+num_pages = st.slider("Number of pages", 1, 10, 1)
 
 # Editable list for excluded domains inside an expander
 with st.expander("Excluded Domains", expanded=st.session_state.expander_open):
