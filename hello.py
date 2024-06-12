@@ -63,6 +63,7 @@ def find_contact_info(domain):
         response = hunter.domain_search(domain)
 
         emails = []
+        confidences = []
         phones = set()
         company_description = "N/A"
 
@@ -71,54 +72,37 @@ def find_contact_info(domain):
                 for email_data in response['emails']:
                     email = email_data['value']
                     confidence = email_data.get('confidence', 'N/A')
-                    emails.append((email, confidence))
+                    emails.append(email)
+                    confidences.append(confidence)
                     if 'phone_number' in email_data and email_data['phone_number']:
                         phones.add(email_data['phone_number'])
             if 'organization' in response:
                 company_description = response['organization']
 
-        return emails, phones, company_description
+        return emails, confidences, phones, company_description
     except Exception as e:
         st.write(f"Error fetching contact info from {domain}: {e}")
-        return [], set(), "N/A"
+        return [], [], set(), "N/A"
 
 def process_results(results):
     processed_results = []
     for result in results:
         domain = urlparse(result["link"]).netloc
-        emails, phones, company_description = find_contact_info(domain)
-
-        email_str = ", ".join([f"{email} (Confidence: {confidence})" for email, confidence in emails]) if emails else "No emails found"
-        phone_str = ", ".join(phones) if phones else "No phones found"
+        emails, confidences, phones, company_description = find_contact_info(domain)
 
         processed_results.append({
             "URL": result["link"],
             "Title": result.get("title", "N/A"),
             "Snippet": result.get("snippet", "N/A"),
             "Business Description": company_description,
-            "Emails": email_str,
-            "Phones": phone_str,
-            "Emails_List": emails  # Keep the original emails list for filtering
+            "Emails": emails,
+            "Confidences": confidences,
+            "Phones": ", ".join(phones) if phones else "No phones found"
         })
     return processed_results
 
-def export_to_csv(results, only_with_email):
-    data = []
-    for result in results:
-        emails = result.get('Emails_List', [])
-        if only_with_email and not emails:
-            continue
-        email_str = result.get('Emails', "No emails found")
-        phone_str = result.get('Phones', "No phones found")
-        data.append({
-            "URL": result["URL"],
-            "Title": result.get("Title", "N/A"),
-            "Snippet": result.get("Snippet", "N/A"),
-            "Business Description": result.get("Business Description", "N/A"),
-            "Emails": email_str,
-            "Phones": phone_str
-        })
-    df = pd.DataFrame(data)
+def export_to_csv(results):
+    df = pd.DataFrame(results)
     csv = df.to_csv(index=False)
     return csv
 
@@ -163,7 +147,7 @@ with col1:
 with col2:
     location = st.text_input("Enter location (optional)")
 
-num_pages = st.slider("Number of pages", 1, 10, 1)
+num_pages = st.slider("Number of pages", 1, 20, 1)
 
 # Editable list for excluded domains inside an expander
 with st.expander("Excluded Domains", expanded=st.session_state.expander_open):
@@ -224,13 +208,20 @@ if st.session_state['processed_results']:
             st.write(f"**Title:** {result.get('Title', 'N/A')}")
             st.write(f"**Snippet:** {result.get('Snippet', 'N/A')}")
             st.write(f"**Business Description:** {result.get('Business Description', 'N/A')}")
-            st.write(f"**Emails:** {result.get('Emails', 'No emails found')}")
             st.write(f"**Phones:** {result.get('Phones', 'No phones found')}")
+            st.write("**Emails and Confidences:**")
+            emails = result.get('Emails', [])
+            confidences = result.get('Confidences', [])
+            if emails:
+                for email, confidence in zip(emails, confidences):
+                    st.write(f"{email} (Confidence: {confidence})")
+            else:
+                st.write("No emails found")
         progress_bar.progress(idx / len(st.session_state['processed_results']))
 
 # Enable and update the export button
 if st.session_state['processed_results']:
-    csv = export_to_csv(st.session_state['processed_results'], only_with_email)
+    csv = export_to_csv(st.session_state['processed_results'])
     export_button_container.download_button(
         label="Export to CSV",
         data=csv,
