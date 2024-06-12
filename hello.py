@@ -102,7 +102,32 @@ def process_results(results):
     return processed_results
 
 def export_to_csv(results):
-    df = pd.DataFrame(results)
+    flattened_results = []
+    for result in results:
+        emails = result.get('Emails', [])
+        confidences = result.get('Confidences', [])
+        if emails:
+            for email, confidence in zip(emails, confidences):
+                flattened_results.append({
+                    "URL": result["URL"],
+                    "Title": result.get("Title", "N/A"),
+                    "Snippet": result.get("Snippet", "N/A"),
+                    "Business Description": result.get("Business Description", "N/A"),
+                    "Email": email,
+                    "Confidence": confidence,
+                    "Phones": result.get("Phones", "No phones found")
+                })
+        else:
+            flattened_results.append({
+                "URL": result["URL"],
+                "Title": result.get("Title", "N/A"),
+                "Snippet": result.get("Snippet", "N/A"),
+                "Business Description": result.get("Business Description", "N/A"),
+                "Email": "No emails found",
+                "Confidence": "N/A",
+                "Phones": result.get("Phones", "No phones found")
+            })
+    df = pd.DataFrame(flattened_results)
     csv = df.to_csv(index=False)
     return csv
 
