@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 from urllib.parse import urlparse
 from pyhunter import PyHunter
-import time
 import json
 import os
 import pandas as pd
@@ -27,6 +26,13 @@ def save_excluded_domains(excluded_domains, file_path='excluded_domains.json'):
     data = {'excluded_domains': excluded_domains}
     with open(file_path, 'w') as file:
         json.dump(data, file, indent=4)
+
+# Initialize session state
+if 'excluded_domains' not in st.session_state:
+    st.session_state.excluded_domains = load_excluded_domains()
+
+if 'expander_open' not in st.session_state:
+    st.session_state.expander_open = False
 
 def search_shops(query, num_pages, api_key, exclude_urls):
     results = []
@@ -116,7 +122,7 @@ def export_to_csv(results, only_with_email):
     csv = df.to_csv(index=False)
     return csv
 
-# Custom CSS for the gray background
+# Custom CSS for the gray background and smaller delete button
 st.markdown(
     """
     <style>
@@ -125,6 +131,20 @@ st.markdown(
         padding: 10px;
         border-radius: 5px;
         margin-bottom: 10px;
+    }
+    .cross-button {
+        color: red;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 0.7em;
+        padding: 2px 6px;
+        margin-left: 5px;
+        text-decoration: none;
+    }
+    .compact-list {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     </style>
     """,
@@ -145,17 +165,29 @@ with col2:
 
 num_pages = st.slider("Number of pages", 1, 20, 1)
 
-# Load existing excluded domains
-excluded_domains = load_excluded_domains()
+# Editable list for excluded domains inside an expander
+with st.expander("Excluded Domains", expanded=st.session_state.expander_open):
+    st.write("### Excluded Domains")
+    for i, url in enumerate(st.session_state.excluded_domains):
+        cols = st.columns([8, 2])
+        with cols[0]:
+            st.markdown(f"<div class='compact-list'><span>{url}</span></div>", unsafe_allow_html=True)
+        with cols[1]:
+            if st.button("❌", key=f"delete_{i}", help="Delete URL"):
+                st.session_state.excluded_domains.pop(i)
+                save_excluded_domains(st.session_state.excluded_domains)
+                st.session_state.expander_open = True  # Keep the expander open
+                st.rerun()  # Refresh the page to update the list
 
-exclude_urls_input = st.text_area("Enter URLs to exclude (comma separated)", value=", ".join(excluded_domains))
-
-if st.button("Add to Excluded Domains", key="add_excluded"):
-    new_excludes = [url.strip() for url in exclude_urls_input.split(",") if url.strip()]
-    # Update the excluded domains list and save to file
-    excluded_domains = list(set(excluded_domains + new_excludes))
-    save_excluded_domains(excluded_domains)
-    st.success("Excluded domains updated and saved.")
+    # Add new URLs to the excluded domains list
+    new_exclude_urls = st.text_area("Add new URLs to exclude (comma separated)")
+    if st.button("Add URLs", key="add_exclude"):
+        if new_exclude_urls:
+            new_urls = [url.strip() for url in new_exclude_urls.split(",") if url.strip()]
+            st.session_state.excluded_domains.extend(new_urls)
+            save_excluded_domains(st.session_state.excluded_domains)
+            st.session_state.expander_open = True  # Keep the expander open
+            st.rerun()  # Refresh the page to update the list
 
 # Container for the export button and checkbox with gray background
 with st.container():
@@ -175,7 +207,7 @@ if 'processed_results' not in st.session_state:
 
 search_button_clicked = st.button("Search", key="search_button")
 if search_button_clicked and search_query:
-    exclude_urls = excluded_domains
+    exclude_urls = st.session_state.excluded_domains
     api_key = SERPAPI_KEY
     full_query = f"{search_query} {location}" if location else search_query
     results = search_shops(full_query, num_pages, api_key, exclude_urls)
