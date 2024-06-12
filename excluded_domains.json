@@ -1,6 +1,13 @@
 {
     "excluded_domains": [
         "target.com",
-        "yelp.com"
+        "yelp.com",
+        "etsy.com",
+        "yandex.ru",
+        "faire.com",
+        "yell.com",
+        "amazon.com",
+        "facebook.com",
+        "instagram.com"
     ]
 }
